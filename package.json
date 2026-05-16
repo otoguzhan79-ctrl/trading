@@ -1,0 +1,14 @@
+{
+  "name": "tv-claude-webhook",
+  "version": "1.0.0",
+  "description": "TradingView webhook → Anthropic Claude API bridge",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "express": "^4.21.0"
+  }
+}
