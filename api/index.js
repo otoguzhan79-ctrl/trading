@@ -1,38 +1,16 @@
-import express from "express";
-import Anthropic from "@anthropic-ai/sdk";
+//@version=5
+indicator("Ücretsiz Vercel Bot Sinyali", overlay=true)
 
-const app = express();
-app.use(express.json());
+// Fiyatı takip etmek için basit bir RSI indikatörü (Örnektir, senin stratejin neyse o çalışır)
+rsiDeğeri = ta.rsi(close, 14)
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Koşul: RSI 30'un altına inerse (Aşırı satım) AL sinyali tetiklensin
+alKoşulu = ta.crossover(rsiDeğeri, 30)
 
-app.post("/tv-webhook", async (req, res) => {
-  try {
-    const tvData = req.body;
-    console.log("TradingView alert received:", JSON.stringify(tvData, null, 2));
+// Sinyal tetiklendiğinde Vercel'e gidecek olan Şifreli JSON Mesajı
+// UYARI: Vercel url'sini Make.com'daki pembe webhook e-posta adresinle değiştireceksin!
+if (alKoşulu)
+    alert('{"symbol": "' + syminfo.ticker + '", "price": "' + str.tostring(close) + '", "signal": "LONG"}', alert.freq_once_per_bar)
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 200,
-      messages: [
-        {
-          role: "user",
-          content: `Act as an expert crypto analyst. Analyze this TradingView signal: ${JSON.stringify(tvData)}. Should I long, short, or wait? Give a 2-sentence rationale.`,
-        },
-      ],
-    });
-
-    const response = message.content[0].text;
-    console.log("Claude response:", response);
-
-    res.status(200).json({ decision: response });
-  } catch (err) {
-    console.error("Webhook error:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Vercel requires a named export for serverless functions
-export default app;
+// Grafik üzerinde sinyali görebilmek için küçük bir ok çizelim
+plotshape(alKoşulu, title="Al Sinyali", location=location.belowbar, color=color.green, style=shape.triangleup, size=size.small)
